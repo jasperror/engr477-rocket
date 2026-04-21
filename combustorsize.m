@@ -1,0 +1,19 @@
+function L = combustorsize(cearesult)
+    p = cearesult.output.froz.pressure(1); % combustor pressure, Pa
+    T = cearesult.input.reactant.temp.value(2); % inlet O2 temperature, K
+    rho_l = cearesult.output.froz.density(1); % combustor density, kg/m^3
+    rho = py.CoolProp.CoolProp.PropsSI('D','P',p,'T',T,'O2'); % Gas density
+    % rho_l = py.CoolProp.CoolProp.PropsSI('D','P',p,'T',T,'O2'); % Liquid droplet density
+    nu = cearesult.output.froz.viscosity(1)/rho_l; % Kinematic viscosity
+    M = cearesult.output.eql.mach(2); % mach number through combustor
+    c = cearesult.output.froz.sonvel(1); % sonic velocity in combustor, m/s
+    gamma = cearesult.output.froz.gamma(1); % combustor specific heat ratio
+    c_p = cearesult.output.froz.cp(1); % combustor isobaric specific heat
+    Pr = cearesult.output.froz.prandtl.froz(1); % combustor Prandtl number
+    T_0 = T*(1+M^2*(gamma-1)/2); % Stagnation temperature
+    T_sat = py.CoolProp.CoolProp.PropsSI('T','P',p,'Q',0,'O2'); % Assuming oxygen is limiting factor in combustor design
+    h_fg = py.CoolProp.CoolProp.PropsSI('H','P',p,'Q',1,'O2')-py.CoolProp.CoolProp.PropsSI('H','P',p,'Q',0,'O2');
+    B = c_p*(T_0-T_sat)/h_fg;
+    r_0 = 5e-4; % Estimate of droplet initial radius
+    L = r_0^2*(M+9/34*Pr/B)/(2+4.5*Pr/B)*c/nu*rho_l/rho*Pr/log(1+B);
+end
